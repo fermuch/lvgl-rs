@@ -7,16 +7,19 @@ fn main() {
     let project_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
         .canonicalize()
         .unwrap();
+    let pwd = PathBuf::from(env::var("PWD").unwrap())
+        .canonicalize()
+        .unwrap();
     let shims_dir = project_dir.join("shims");
     let vendor = project_dir.join("vendor");
     let vendor_src = vendor.join("lvgl").join("src");
 
     let lv_config_dir = {
         let raw_path = env::var(CONFIG_NAME).unwrap_or_else(|_| {
-            panic!(
-                "The environment variable {} is required to be defined",
-                CONFIG_NAME
-            );
+            // Based on https://github.com/rust-lang/cargo/issues/8375
+            // there is no good way to know the main project path to load
+            // lv_conf.h from, so we use PWD (current path on UNIX)
+            String::from(pwd.to_str().unwrap())
         });
         let conf_path = PathBuf::from(raw_path);
 
@@ -31,7 +34,7 @@ fn main() {
         }
         if !conf_path.join("lv_conf.h").exists() {
             panic!(format!(
-                "Directory referenced by {} needs to contain a file called lv_conf.h",
+                "Directory referenced by {} or PWD path needs to contain a file called lv_conf.h",
                 CONFIG_NAME
             ));
         }
@@ -52,7 +55,7 @@ fn main() {
     add_c_files(&mut cfg, vendor_src.join("lv_misc"));
     add_c_files(&mut cfg, vendor_src.join("lv_themes"));
     add_c_files(&mut cfg, vendor_src.join("lv_widgets"));
-    add_c_files(&mut cfg, &lv_config_dir);
+    add_c_files(&mut cfg, &lv_config_dir.as_os_str());
     add_c_files(&mut cfg, &shims_dir);
 
     cfg.define("LV_CONF_INCLUDE_SIMPLE", Some("1"))
