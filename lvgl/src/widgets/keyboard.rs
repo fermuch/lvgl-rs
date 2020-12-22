@@ -4,7 +4,7 @@ use crate::support::LvError;
 use core::convert::TryFrom;
 
 impl Keyboard {
-    pub fn set_textarea(&mut self, textarea: Textarea) -> LvResult<()> {
+    pub fn set_textarea(&mut self, textarea: &mut Textarea) -> LvResult<()> {
         unsafe {
             lvgl_sys::lv_keyboard_set_textarea(self.core.raw()?.as_mut(), textarea.raw()?.as_mut());
         }
